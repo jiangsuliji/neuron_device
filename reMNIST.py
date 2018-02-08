@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 
 # Parameters
-learning_rate = 0.01
+learning_rate = 0.1
 batch_size = 100
 display_step = 1
 model_path = "./MNIST/nn/NN"
@@ -39,7 +39,7 @@ def fround(fnum):
 def multilayer_perceptron(x, weights):
     # Hidden layer with RELU activation
     layer_1 = tf.matmul(x, weights['h1'])
-    # layer_1 = tf.nn.relu(layer_1)
+    layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
     out_layer = tf.matmul(layer_1, weights['out'])
     return out_layer
@@ -55,7 +55,7 @@ pred = multilayer_perceptron(x, weights)
 
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)
 # init = tf.global_variables_initializer()

@@ -17,12 +17,11 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.01
+learning_rate = 0.1
 batch_size = 100
-display_step = 1
 model_path = "./MNIST/nn/NN"
 file_ending = ".ckpt"
-epoch_num = 40
+epoch_num = 40 
 
 # Network Parameters
 n_hidden_1 = 300 # 1st layer number of features
@@ -35,10 +34,10 @@ y = tf.placeholder("float", [None, n_classes])
 
 
 # Create model
-def multilayer_perceptron(x, weights):
+def multilayer_perceptron(x, weights, biases):
     # Hidden layer with RELU activation
     layer_1 = tf.matmul(x, weights['h1'])
-    # layer_1 = tf.nn.relu(layer_1)
+    layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
     out_layer = tf.matmul(layer_1, weights['out'])
     return out_layer
@@ -48,13 +47,19 @@ weights = {
     'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
     'out': tf.Variable(tf.random_normal([n_hidden_1, n_classes]))
 }
+biases = {
+    'b1': tf.Variable(tf.random_normal([n_hidden_1])),
+    'out': tf.Variable(tf.random_normal([n_classes]))
+}
 
 # Construct model
-pred = multilayer_perceptron(x, weights)
+pred = multilayer_perceptron(x, weights,biases)
 
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+#cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=pred)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+#optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
@@ -84,16 +89,19 @@ with tf.Session() as sess:
             # Compute average loss
             avg_cost += c / total_batch
         # Display logs per epoch step
-        if epoch % display_step == 0:
-            print("Epoch:", '%04d' % (epoch+1), "cost=", \
-                "{:.9f}".format(avg_cost))
+        #if epoch % display_step == 0:
+        #    print("Epoch:", '%04d' % (epoch+1), "cost=", \
+        #        "{:.9f}".format(avg_cost))
          
         # Test model
         correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
         # Calculate accuracy
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
         print("Accuracy:", accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
+        
         accuracies.append(accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
+
+
 
         # Save model weights to disk
         save_path = saver.save(sess, save_path)
