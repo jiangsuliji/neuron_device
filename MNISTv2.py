@@ -2,9 +2,8 @@
 Save and Restore a model using TensorFlow.
 This example is using the MNIST database of handwritten digits
 (http://yann.lecun.com/exdb/mnist/)
-Author: Aymeric Damien
-Updated by Ji Li
-Project: https://github.com/aymericdamien/TensorFlow-Examples/
+credit to: Aymeric Damien
+Author:y Ji Li
 '''
 
 # This is for MNIST training but saves the results into model file
@@ -21,8 +20,9 @@ import tensorflow as tf
 learning_rate = 0.01
 batch_size = 100
 display_step = 1
-model_path = "./UCI/nn/network.ckpt"
-epoch_num = 3
+model_path = "./MNIST/nn/NN"
+file_ending = ".ckpt"
+epoch_num = 40
 
 # Network Parameters
 n_hidden_1 = 300 # 1st layer number of features
@@ -72,6 +72,7 @@ with tf.Session() as sess:
     # Training cycle
     accuracies = []
     for epoch in range(epoch_num):
+        save_path = model_path + str(epoch+1) + file_ending
         avg_cost = 0.
         total_batch = int(mnist.train.num_examples/batch_size)
         # Loop over all batches
@@ -94,10 +95,11 @@ with tf.Session() as sess:
         print("Accuracy:", accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
         accuracies.append(accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
 
+        # Save model weights to disk
+        save_path = saver.save(sess, save_path)
+        print("Model saved in file: %s" % save_path)
+
     print("First Optimization Finished!")
     print("Final accuracies:", accuracies)
 
-    # Save model weights to disk
-    save_path = saver.save(sess, model_path)
-    print("Model saved in file: %s" % save_path)
 
