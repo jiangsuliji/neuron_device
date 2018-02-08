@@ -60,7 +60,7 @@ optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 init = tf.global_variables_initializer()
 
 # 'Saver' op to save and restore all the variables
-saver = tf.train.Saver()
+saver = tf.train.Saver(max_to_keep=100)
 
 # Running first session
 print("Starting 1st session...")
