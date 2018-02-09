@@ -8,20 +8,34 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 import tensorflow as tf
 import numpy as np
 
-# Parameters
+# Training Parameters
 learning_rate = 0.1
 batch_size = 100
 display_step = 1
 model_path = "./MNIST/nn/NN"
 file_ending = ".ckpt"
 epoch_num = 40 
-n_bits = 6 # Device resolution--device state--mapping -1.0~1.0 into these states
-f_n_bits = 2.0/(2**n_bits)
 
 # Network Parameters
 n_hidden_1 = 300 # 1st layer number of features
 n_input = 784 # MNIST data input (img shape: 28*28)
 n_classes = 10 # MNIST total classes (0-9 digits)
+
+# Device Parameters
+n_bits = 6 # Device resolution--device state--mapping -1.0~1.0 into these states
+f_n_bits = 2.0/(2**n_bits)
+# Gaussian distribution
+mu = 0 # Mean 
+sigma = 0.0 # Standard deviation
+#num_of_samples = 100 
+gaussian_matrix = {
+        'h1': np.random.normal(mu,sigma,epoch_num*n_input*n_hidden_1).\
+                reshape(epoch_num,n_input,n_hidden_1),
+        'out': np.random.normal(mu,sigma,epoch_num*n_hidden_1*n_classes).\
+                reshape(epoch_num,n_hidden_1,n_classes)
+        } 
+        # Stores epoch *[dimension,dimension] for each weight matrix
+
 
 # tf Graph input
 x = tf.placeholder("float", [None, n_input])
@@ -107,15 +121,21 @@ with tf.Session() as sess:
         # update weight values
         newh1 = weights['h1'].eval()
         newout = weights['out'].eval()
+        newh1 += gaussian_matrix['h1'][epoch]
+        newout += gaussian_matrix['out'][epoch]
         #print(newh1)
         for i in range(0,n_input):
             for j in range(0,n_hidden_1):
                 newh1[i][j] = fround(newh1[i][j])
+                newh1[i]
         #print(newh1)
         for i in range(0,n_hidden_1):
             for j in range(0,n_classes):
                 newout[i][j] = fround(newout[i][j])
         
+        
+
+
         weights['h1'].assign(newh1).eval()
         weights['out'].assign(newout).eval()
 
