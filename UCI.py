@@ -69,29 +69,38 @@ def main(unused_argv):
     # Set up logging for predictions
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-           tensors=tensors_to_log, every_n_iter=50)
+           tensors=tensors_to_log, every_n_iter=500)
 
-    # Train the model
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"x": train_data},
-            y=train_labels,
-            batch_size=100,
-            num_epochs=40,
-            shuffle=True)
-    mnist_classifier.train(
-            input_fn=train_input_fn,
-            steps=None,
-            hooks=[logging_hook])
+    # Epoch based training
+    accuracy_results = []
+
+    for i in xrange(0,40):
+        print("-----In epoch ",i,":")
+        # Train the model
+        train_input_fn = tf.estimator.inputs.numpy_input_fn(
+                x={"x": train_data},
+                y=train_labels,
+                batch_size=100,
+                num_epochs=1,
+                shuffle=True)
+        mnist_classifier.train(
+                input_fn=train_input_fn,
+                steps=None,
+                #hooks=[logging_hook]
+                )
     
-    # Evaluate the model and print results
-    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-            x={"x": eval_data},
-            y=eval_labels,
-            num_epochs=1,
-            shuffle=False)
-    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
-    print(eval_results)
-
+        # Evaluate the model and print results
+        eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+                x={"x": eval_data},
+                y=eval_labels,
+                num_epochs=1,
+                shuffle=False)
+        eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+        
+        print("--",eval_results,"--")
+        accuracy_results.append(eval_results["accuracy"])
+    
+    print("Final accuracy results: ",accuracy_results)
 
 if __name__ == "__main__":
     tf.app.run()
