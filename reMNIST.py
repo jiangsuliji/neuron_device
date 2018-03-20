@@ -36,6 +36,41 @@ gaussian_matrix = {
         } 
         # Stores epoch *[dimension,dimension] for each weight matrix
 
+# normal sample with mean and var
+def new_weight(mean, var):
+    return var * np.random.randn()+mean
+
+# parse input distribution data
+# return distribution, max, min
+distribution = []
+distribution_path = "./distribution.txt"
+distribution_max, distribution_min = None, None
+distribution_stage = None
+def read_distribution(path):
+    rtn = []
+    with open(path) as f:
+        lines = f.readlines()
+        for line in lines[1:]:
+            tmp = line.split()
+            rtn.append([float(tmp[1]), float(tmp[2])])
+    return rtn, rtn[-1][0], rtn[0][0]
+
+distribution, distribution_max, distribution_min = read_distribution(distribution_path)
+
+distribution_stage = len(distribution)
+# find distribution parameter 
+# conductance -1 to 1 value,distribution array, max, min of conductance, total stages
+# return mean, stdv
+def check_distribution(c, chi, clo, d, hi, lo, stage):
+    idx = int((c-clo)*stage/(chi-clo))
+    if idx >= stage-1: 
+        m, var = d[-1][0], d[-1][1]
+    else:
+        m, var = (d[idx][0]+d[idx+1][0])/2.0, (d[idx][1]+d[idx+1][1])/2.0
+    m = new_weight(m, var)
+    return (m-lo)/(hi-lo)*(chi-clo) + clo
+
+#u, var = check_distribution(-0.1, 4.5, -4.5,  distribution, distribution_max, distribution_min, distribution_stage)
 
 # tf Graph input
 x = tf.placeholder("float", [None, n_input])
@@ -121,20 +156,25 @@ with tf.Session() as sess:
         # update weight values
         newh1 = weights['h1'].eval()
         newout = weights['out'].eval()
-        newh1 += gaussian_matrix['h1'][epoch]
-        newout += gaussian_matrix['out'][epoch]
+        #newh1 += gaussian_matrix['h1'][epoch]
+        #newout += gaussian_matrix['out'][epoch]
         #print(newh1)
-        for i in range(0,n_input):
-            for j in range(0,n_hidden_1):
-                newh1[i][j] = fround(newh1[i][j])
-                newh1[i]
-        #print(newh1)
-        for i in range(0,n_hidden_1):
-            for j in range(0,n_classes):
-                newout[i][j] = fround(newout[i][j])
-        
+        #print(newh1.max(),newh1.min())
+        #print(newout.max(),newout.min())
         
 
+
+        for i in range(0,n_input):
+            for j in range(0,n_hidden_1):
+                tmp = newh1[i][j] 
+                tmp = check_distribution(tmp, 4.5, -4.5,  distribution, distribution_max, distribution_min, distribution_stage)
+                newh1[i][j] = fround(tmp)
+        #print("after-----",newh1)
+        for i in range(0,n_hidden_1):
+            for j in range(0,n_classes):
+                tmp = newout[i][j] 
+                tmp = check_distribution(tmp, 3.0, -3.0,  distribution, distribution_max, distribution_min, distribution_stage)
+                newout[i][j] = fround(tmp)
 
         weights['h1'].assign(newh1).eval()
         weights['out'].assign(newout).eval()
