@@ -51,14 +51,38 @@ eval_labels =  np.asarray(eval_labels)
 #images = tf.constant(train_data, dtype=tf.float32) # X is a np.array
 #labels = tf.constant(train_labels, dtype=tf.int32)   # y is a np.array
 
+def py_func(func, inp, Tout, stateful=True, name=None, grad=None):
+
+    # Need to generate a unique name to avoid duplicates:
+    rnd_name = 'PyFuncGrad' + str(np.random.randint(0, 1E+8))
+
+    tf.RegisterGradient(rnd_name)(grad)
+    g = tf.get_default_graph()
+    with g.gradient_override_map({"PyFunc": rnd_name}):
+        return tf.py_func(func, inp, Tout, stateful=stateful, name=name)
+
+def clip_grad(x, clip_value, name=None):
+    """"
+    scales backpropagated gradient so that
+    its L2 norm is no more than `clip_value`
+    """
+    with tf.name_scope(name, "ClipGrad", [x]) as name:
+        return py_func(lambda x : x,
+                        [x],
+                        [tf.float32],
+                        name=name,
+                        grad=lambda op, g : tf.clip_by_norm(g, clip_value))[0]
+
+
 # Create model
 def multilayer_perceptron(x, weights, biases):
     # Hidden layer with RELU activation
-    layer_1 = tf.matmul(x, weights['h1'])#+biases['b1']
-    layer_1 = tf.tanh(layer_1)
+    layer_1 = tf.matmul(x, clip_grad(weights['h1'],1.5))#+biases['b1']
+    # layer_1 = tf.tanh(layer_1)
     # Output layer with linear activation
-    out_layer = tf.matmul(layer_1, weights['out'])#+biases['out']
-    out_layer = tf.layers.dropout(inputs=out_layer,rate=0.5,training=True)
+    out_layer = tf.matmul(layer_1, clip_grad(weights['out'], 1.5))#+biases['out']
+
+    #out_layer = tf.layers.dropout(inputs=out_layer,rate=0.5,training=True)
     return out_layer
 
 # Store layers weight & bias
@@ -85,6 +109,10 @@ init = tf.global_variables_initializer()
 
 # 'Saver' op to save and restore all the variables
 saver = tf.train.Saver(max_to_keep=100)
+
+
+
+
 
 # Running first session
 print("Starting 1st session...")
