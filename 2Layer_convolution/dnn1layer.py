@@ -12,7 +12,7 @@ import tensorflow as tf
 
 # Parameters
 learning_rate = 0.3 
-batch_size = 20
+batch_size = 30
 model_path = "./nn/NN"
 file_ending = ".ckpt"
 epoch_num = 50 
@@ -34,8 +34,23 @@ trainY= data['trainY']
 testY= data['testY']
 
 # reorganize rows
+train = np.concatenate((trainX, testX), axis = 0)
+test = np.concatenate((trainY, testY), axis = 0)
+idx = np.random.randint(train.shape[0],size=80)
+trainX = []
+trainY = []
+testX = []
+testY = []
+for i in range(0,400):
+    if i not in idx:
+        trainX.append(train[i])
+        trainY.append(test[i])
+    else:
+        testX.append(train[i])
+        testY.append(test[i])
 
-
+trainX = np.asarray(trainX)
+testX = np.asarray(testX)
 # process label to one hot
 trainY_onehot = []
 for i in trainY:
@@ -48,6 +63,11 @@ for i in testY:
     testY_onehot.append([0]*n_classes)
     testY_onehot[-1][int(i)] = 1
 testY = np.asarray(testY_onehot)
+
+# scaling
+trainX = trainX/256
+testX = testX/256
+#print(":::",np.max(testY), np.max(trainX), np.min(trainY))
 
 #images = tf.constant(train_data, dtype=tf.float32) # X is a np.array
 #labels = tf.constant(train_labels, dtype=tf.int32)   # y is a np.array
