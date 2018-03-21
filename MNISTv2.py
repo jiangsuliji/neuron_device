@@ -18,7 +18,7 @@ import tensorflow as tf
 import numpy as np
 
 # Parameters
-learning_rate = 0.03
+learning_rate = 0.1
 batch_size = 100
 model_path = "./MNIST/nn/NN"
 file_ending = ".ckpt"

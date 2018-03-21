@@ -174,16 +174,14 @@ with tf.Session() as sess:
                     tmp = saveh1[i][j] 
                     tmp = check_distribution(tmp, 4.8, -4.8,  distribution, distribution_max, distribution_min, distribution_stage)
                     newh1[i][j] = tmp
-                    #newh1[i][j] = fround(tmp)
             #print("after-----",newh1)
             for i in range(0,n_hidden_1):
                 for j in range(0,n_classes):
                     tmp = saveout[i][j] 
                     tmp = check_distribution(tmp, 4.8, -4.8,  distribution, distribution_max, distribution_min, distribution_stage)
                     newout[i][j] = tmp
-                    #newout[i][j] = fround(tmp)
             weights['h1'].assign(newh1).eval()
-
+            weights['out'].assign(newout).eval()
 
             # Real accuracy test
             # Test model
