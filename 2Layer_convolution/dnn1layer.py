@@ -4,21 +4,19 @@ Author:y Ji Li
 This file is for ORL dataset, 1 layer DNN implementation training and save model 
 '''
 
-# This is for MNIST training but saves the results into model file
-
 from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.3 
-batch_size = 30
+learning_rate = 0.1 
+batch_size = 20
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 50 
+epoch_num = 20 
 
 # Network Parameters
-n_hidden_1 = 500 # 1st layer number of features
+n_hidden_1 = 1000 # 1st layer number of features
 n_input = 112*92 # MNIST data input (img shape: 28*28)
 n_classes = 20 # MNIST total classes (0-9 digits)
 
@@ -51,6 +49,7 @@ for i in range(0,400):
 
 trainX = np.asarray(trainX)
 testX = np.asarray(testX)
+
 # process label to one hot
 trainY_onehot = []
 for i in trainY:
@@ -65,8 +64,13 @@ for i in testY:
 testY = np.asarray(testY_onehot)
 
 # scaling
-trainX = trainX/256
-testX = testX/256
+trainX = (trainX-np.mean(trainX))/256
+testX = (testX-np.mean(testX))/256
+
+# save test set for later evaluation
+np.save('testX',testX)
+np.save('testY',testY)
+
 #print(":::",np.max(testY), np.max(trainX), np.min(trainY))
 
 #images = tf.constant(train_data, dtype=tf.float32) # X is a np.array
@@ -98,10 +102,10 @@ def clip_grad(x, clip_value, name=None):
 # Create model
 def multilayer_perceptron(x, weights, biases):
     # Hidden layer with RELU activation
-    layer_1 = tf.matmul(x, clip_grad(weights['h1'],3.5))#+biases['b1']
+    layer_1 = tf.matmul(x, clip_grad(weights['h1'],5.5))#+biases['b1']
     layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
-    out_layer = tf.matmul(layer_1, clip_grad(weights['out'], 3.5))#+biases['out']
+    out_layer = tf.matmul(layer_1, clip_grad(weights['out'], 5.5))#+biases['out']
     #out_layer = tf.layers.dropout(inputs=out_layer,rate=0.5,training=True)
     return out_layer
 
