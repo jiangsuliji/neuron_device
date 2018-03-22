@@ -9,11 +9,11 @@ import numpy as np
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.1 
-batch_size = 20
+learning_rate = 0.001 
+batch_size = 100
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 20 
+epoch_num = 50 
 
 # Network Parameters
 n_hidden_1 = 1000 # 1st layer number of features
@@ -24,53 +24,58 @@ n_classes = 20 # MNIST total classes (0-9 digits)
 x = tf.placeholder("float", [None, n_input])
 y = tf.placeholder("float", [None, n_classes])
 
-#load dataset
-data = np.load('ORL_faces.npz') #assumption is that the data is unzipped
-trainX = data['trainX']
-testX = data['testX']
-trainY= data['trainY']
-testY= data['testY']
+##load dataset
+testX = np.load('testX.npy')
+testY = np.load('testY.npy')
+trainX = np.load('trainX.npy')
+trainY = np.load('trainY.npy')
 
-# reorganize rows
-train = np.concatenate((trainX, testX), axis = 0)
-test = np.concatenate((trainY, testY), axis = 0)
-idx = np.random.randint(train.shape[0],size=80)
-trainX = []
-trainY = []
-testX = []
-testY = []
-for i in range(0,400):
-    if i not in idx:
-        trainX.append(train[i])
-        trainY.append(test[i])
-    else:
-        testX.append(train[i])
-        testY.append(test[i])
-
-trainX = np.asarray(trainX)
-testX = np.asarray(testX)
-
-# process label to one hot
-trainY_onehot = []
-for i in trainY:
-    trainY_onehot.append([0]*n_classes)
-    trainY_onehot[-1][int(i)] = 1
-trainY = np.asarray(trainY_onehot)
-
-testY_onehot = []
-for i in testY:
-    testY_onehot.append([0]*n_classes)
-    testY_onehot[-1][int(i)] = 1
-testY = np.asarray(testY_onehot)
-
-# scaling
-trainX = (trainX-np.mean(trainX))/256
-testX = (testX-np.mean(testX))/256
-
-# save test set for later evaluation
-np.save('testX',testX)
-np.save('testY',testY)
-
+#data = np.load('ORL_faces.npz') #assumption is that the data is unzipped
+#trainX = data['trainX']
+#testX = data['testX']
+#trainY= data['trainY']
+#testY= data['testY']
+#
+## reorganize rows
+#train = np.concatenate((trainX, testX), axis = 0)
+#test = np.concatenate((trainY, testY), axis = 0)
+#idx = np.random.randint(train.shape[0],size=80)
+#trainX = []
+#trainY = []
+#testX = []
+#testY = []
+#for i in range(0,400):
+#    if i not in idx:
+#        trainX.append(train[i])
+#        trainY.append(test[i])
+#    else:
+#        testX.append(train[i])
+#        testY.append(test[i])
+#
+#trainX = np.asarray(trainX)
+#testX = np.asarray(testX)
+#
+## process label to one hot
+#trainY_onehot = []
+#for i in trainY:
+#    trainY_onehot.append([0]*n_classes)
+#    trainY_onehot[-1][int(i)] = 1
+#trainY = np.asarray(trainY_onehot)
+#
+#testY_onehot = []
+#for i in testY:
+#    testY_onehot.append([0]*n_classes)
+#    testY_onehot[-1][int(i)] = 1
+#testY = np.asarray(testY_onehot)
+#
+## scaling
+#trainX = (trainX-np.mean(trainX))/256
+#testX = (testX-np.mean(testX))/256
+#
+## save test set for later evaluation
+#np.save('testX',testX)
+#np.save('testY',testY)
+#
 #print(":::",np.max(testY), np.max(trainX), np.min(trainY))
 
 #images = tf.constant(train_data, dtype=tf.float32) # X is a np.array

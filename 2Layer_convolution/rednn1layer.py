@@ -13,7 +13,7 @@ import tensorflow as tf
 #batch_size = 30
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 15 
+epoch_num = 20 
 num_of_samples = 1
 
 # Network Parameters
