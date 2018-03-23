@@ -13,11 +13,11 @@ import tensorflow as tf
 #batch_size = 30
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 20 
+epoch_num = 15 
 num_of_samples = 1
 
 # Network Parameters
-n_hidden_1 = 1000 # 1st layer number of features
+n_hidden_1 = 100 # 1st layer number of features
 n_input = 112*92 # MNIST data input (img shape: 28*28)
 n_classes = 20 # MNIST total classes (0-9 digits)
 
