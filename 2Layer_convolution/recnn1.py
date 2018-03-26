@@ -1,7 +1,7 @@
 '''
 Save and Restore a model using TensorFlow.
 Author:y Ji Li
-This file is for ORL dataset, 1 layer DNN implementation training and save model 
+retore cnn for face regco
 '''
 
 from __future__ import print_function
@@ -9,8 +9,6 @@ import numpy as np
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.0001 
-batch_size = 30
 model_path = "./nn2/NN"
 file_ending = ".ckpt"
 epoch_num = 20 
@@ -29,6 +27,9 @@ x = tf.placeholder("float", [None, n_input], name='X')
 x_image = tf.reshape(x, [-1, 112, 92, 1])
 y = tf.placeholder("float", [None, n_classes])
 
+# Gaussian distribution
+num_of_samples = 1
+
 ##load dataset
 #testX = np.load('testX.npy')
 #testY = np.load('testY.npy')
@@ -44,6 +45,43 @@ testY= data['testY']
 #Reshape train and test labels to one hot vector
 trainY = np.eye(n_classes)[trainY]
 testY  = np.eye(n_classes)[testY]
+
+# normal sample with mean and var
+def new_weight(mean, var):
+    return var * np.random.randn()+mean
+
+# parse input distribution data
+# return distribution, max, min
+distribution = []
+distribution_path = "../distribution.txt"
+distribution_max, distribution_min = None, None
+distribution_stage = None
+def read_distribution(path):
+    rtn = []
+    with open(path) as f:
+        lines = f.readlines()
+        for line in lines[1:]:
+            tmp = line.split()
+            rtn.append([float(tmp[1]), float(tmp[2])])
+    return rtn, rtn[-1][0], rtn[0][0]
+
+distribution, distribution_max, distribution_min = read_distribution(distribution_path)
+
+distribution_stage = len(distribution)
+# find distribution parameter 
+# conductance -1 to 1 value,distribution array, max, min of conductance, total stages
+# return mean, stdv
+def check_distribution(c, chi, clo, d, hi, lo, stage):
+    idx = int((c-clo)*stage/(chi-clo))
+    if idx >= stage-1: 
+        m, var = d[-1][0], d[-1][1]
+    else:
+        m, var = (d[idx][0]+d[idx+1][0])/2.0, (d[idx][1]+d[idx+1][1])/2.0
+    m = new_weight(m, var)
+    return (m-lo)/(hi-lo)*(chi-clo) + clo
+
+#u, var = check_distribution(-0.1, 4.5, -4.5,  distribution, distribution_max, distribution_min, distribution_stage)
+
 
 ## reorganize rows
 #train = np.concatenate((trainX, testX), axis = 0)
@@ -150,7 +188,7 @@ def multilayer_perceptron(x, weights, biases):
     conv1 = tf.nn.relu(conv1)
 
     Xi, features = reduce(conv1)
-    print("-----", Xi.shape)
+    #print("-----", Xi.shape)
     # Hidden layer with RELU activation
     layer_1 = tf.matmul(Xi, clip_grad(weights['h3'],5.5))#+biases['b1']
     layer_1 = tf.nn.relu(layer_1)
@@ -178,9 +216,6 @@ pred = multilayer_perceptron(x_image, weights,biases)
 
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
-#cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=pred)
-#optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
@@ -192,15 +227,18 @@ saver = tf.train.Saver(max_to_keep=100)
 
 
 # Running first session
-print("Starting 1st session...")
+print("Starting 2nd session...")
 with tf.Session() as sess:
 
+    tf.initialize_all_variables().run() 
+    real_accu = []
+    ideal_accu = []
+
+
     #print("------Testing inputs ------------")
-    print("testing shape:", trainX.shape, testX.shape, trainY.shape, testY.shape)
+    #print("testing shape:", trainX.shape, testX.shape, trainY.shape, testY.shape)
     #print(trainX, trainY)
     #print(testX, testY)
-
-    print("------staring training eval etc--")
 
     # Run the initializer
     sess.run(init)
@@ -208,50 +246,92 @@ with tf.Session() as sess:
     # Training cycle
     accuracies = []
     for epoch in range(epoch_num):
-        print("--in epoch ", epoch)
         save_path = model_path + str(epoch+1) + file_ending
-        avg_cost = 0.
-        total_batch = int(trainX.shape[0]/batch_size)
+        #avg_cost = 0.
 
-        _, train_loss = sess.run([optimizer, cost], feed_dict={
-            x:trainX, y:trainY})
-        
-        
-        # Loop over all batches
-        #for i in range(total_batch):
-            #batch_x, batch_y = tf.train.batch([images, labels], batch_size=batch_size, capacity=300, enqueue_many=True)
-            #print("--in ",i,"-th batch")
-            #training_idx = np.random.randint(trainX.shape[0],size=batch_size)
-            #batch_x = trainX[training_idx]
-            #batch_y = trainY[training_idx]
+        # Restore model weights from previously saved model
+        saver.restore(sess, save_path)
+        print("Model restored from file: %s" % save_path)
 
-            #print(training_idx.shape,batch_x.shape, batch_y.shape)
-            # Run optimization op (backprop) and cost op (to get loss value)
-            #_, c = sess.run([optimizer, cost], feed_dict={x: batch_x,
-              #                                           y: batch_y})
-            # Compute average loss
-            #avg_cost += c / total_batch
-        # Display logs per epoch step
-        #if epoch % display_step == 0:
-        #    print("Epoch:", '%04d' % (epoch+1), "cost=", \
-        #        "{:.9f}".format(avg_cost))
-         
         # Test model
         correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
         # Calculate accuracy
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-        print("Accuracy:", accuracy.eval({x: testX, y: testY}))
-        accuracies.append(accuracy.eval({x: testX, y: testY})) 
+        ideal_accu.append(accuracy.eval({x: testX, y: testY}))
 
-        # Save model weights to disk
-        save_path = saver.save(sess, save_path)
-        print("Model saved in file: %s" % save_path)
+        print("Ideal Accuracy:", ideal_accu[-1])
 
+        # update weight values
+        newh1 = weights['h1'].eval()
+        newh2 = weights['h2'].eval()
+        newh3 = weights['h3'].eval()
+        newout = weights['out'].eval()
+        saveh1 = np.copy(newh1) # deep copy
+        saveh2 = np.copy(newh2)
+        saveh3 = np.copy(newh3)
+        saveout = np.copy(newout)
+        #newh1 += gaussian_matrix['h1'][epoch]
+        #newout += gaussian_matrix['out'][epoch]
+        #print(newh2)
+        print("weight layer 1 max-min:",newh1.max(),newh1.min())
+        print("weight layer 2 max-min:",newh2.max(),newh2.min())
+        print("weight layer 3 max-min:",newh3.max(),newh3.min())
+        print("weight layer 4 max-min:",newout.max(),newout.min())
+        
+        sample_accu = []
+        
+        # loop for # of normal distribution samples
+        for sample in range(num_of_samples):
+            for i in range(0,saveh1.shape[0]):
+                for j in range(0,saveh1.shape[1]):
+                    for k in range(0, saveh1.shape[3]):
+                        tmp = saveh1[i][j][0][k] 
+                    #print("==", i, '--', j, ':',)
+                        tmp = check_distribution(tmp, .0201, -.0201,  distribution, distribution_max, distribution_min, distribution_stage)
+                        newh1[i][j][0][k] = tmp
 
+            for i in range(0,saveh2.shape[0]):
+                for j in range(0,saveh2.shape[1]):
+                    for k in range(0, saveh2.shape[2]):
+                        for l in range(0, saveh2.shape[3]):
+                            tmp = saveh2[i][j][k][l]
+                            tmp = check_distribution(tmp, .0201, -.0201,  distribution, distribution_max, distribution_min, distribution_stage)
+                            newh2[i][j][k][l] = tmp
+
+            for i in range(0,saveh3.shape[0]):
+                for j in range(0,saveh3.shape[1]):
+                    tmp = saveh3[i][j] 
+                    tmp = check_distribution(tmp, .0201, -.0201,  distribution, distribution_max, distribution_min, distribution_stage)
+                    newh3[i][j] = tmp
+
+            for i in range(0,saveout.shape[0]):
+                for j in range(0,saveout.shape[1]):
+                    tmp = saveout[i][j] 
+                    tmp = check_distribution(tmp, .0201, -.0201,  distribution, distribution_max, distribution_min, distribution_stage)
+                    newout[i][j] = tmp
+            weights['h1'].assign(newh1).eval()
+            weights['h2'].assign(newh2).eval()
+            weights['h3'].assign(newh3).eval()
+            weights['out'].assign(newout).eval()
+
+            #print("after-----",newh2)
+            # Real accuracy test
+            # Test model
+            correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+            # Calculate accuracy
+            
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+            sample_accu.append(accuracy.eval({x: testX, y: testY}))
+            
+        print("Real sample_accu: ",sample_accu)
+        real_accu.append(sum(sample_accu)/(len(sample_accu)))        
+        
+         
+
+    print("Final ideal accuracies:", ideal_accu)
+    print("Final real accuracies:", real_accu)
 
     
 
-    print("First Optimization Finished!")
-    print("Final accuracies:", accuracies)
 
 
