@@ -9,14 +9,14 @@ import numpy as np
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.01 
-batch_size = 10
+learning_rate = 0.00003 
+batch_size = 20
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 15 
+epoch_num = 20 
 
 # Network Parameters
-n_hidden_1 = 100 # 1st layer number of features
+n_hidden_1 = 1024 # 1st layer number of features
 n_input = 10304#112*92 # MNIST data input (img shape: 28*28)
 n_classes = 20 # MNIST total classes (0-9 digits)
 
@@ -25,7 +25,7 @@ n_classes = 20 # MNIST total classes (0-9 digits)
 #conv1_num = 16  # Convolution feature number
 
 # tf Graph input
-x = tf.placeholder("float", [None, n_input])
+x = tf.placeholder("float", [None, n_input], name='X')
 x_image = tf.reshape(x, [-1, 112, 92, 1])
 y = tf.placeholder("float", [None, n_classes])
 
@@ -122,6 +122,7 @@ def reduce(tensor):
 
 # Create model
 def multilayer_perceptron(x, weights, biases):
+    # conv1
     x = tf.reshape(x, [-1, 112, 92, 1])
     conv1 = tf.nn.conv2d(
       input=x,
@@ -130,16 +131,28 @@ def multilayer_perceptron(x, weights, biases):
       strides = [1,1,1,1],
       padding='SAME')
       #activation=tf.nn.relu
-      
-#    conv1 = max_pooling(input_data=conv1,size=2)
+    
+    conv1 = tf.nn.max_pool(value = conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
     conv1 = tf.nn.relu(conv1)
 
-#    conv1 = tf.reshape(conv1, [-1, 112, 92, 1])
+    # conv2
+    conv1 = tf.reshape(conv1, [-1, 112/2, 92/2, 16])
+   
+    conv1 = tf.nn.conv2d(
+      input=conv1,
+      filter=weights['h2'],
+      #kernel_size=[5, 5],
+      strides = [1,1,1,1],
+      padding='SAME')
+      #activation=tf.nn.relu
     
-    
+    conv1 = tf.nn.max_pool(value = conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = 'SAME')
+    conv1 = tf.nn.relu(conv1)
+
     Xi, features = reduce(conv1)
+    print("-----", Xi.shape)
     # Hidden layer with RELU activation
-    layer_1 = tf.matmul(Xi, clip_grad(weights['h2'],5.5))#+biases['b1']
+    layer_1 = tf.matmul(Xi, clip_grad(weights['h3'],5.5))#+biases['b1']
     layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
     out_layer = tf.matmul(layer_1, clip_grad(weights['out'], 5.5))#+biases['out']
@@ -149,9 +162,10 @@ def multilayer_perceptron(x, weights, biases):
 # Store layers weight & bias
 weights = {
      # filter size F, F, channel#, filter# K
-    'h1': tf.Variable(tf.random_normal([5,5,1,16])),
-    'h2': tf.Variable(tf.random_normal([112*92*16, n_hidden_1])),
-    'out': tf.Variable(tf.random_normal([n_hidden_1, n_classes]))
+    'h1': tf.Variable(tf.truncated_normal([5,5,1,16],stddev=0.01)),
+    'h2': tf.Variable(tf.truncated_normal([5,5,16,36],stddev=0.01)),
+    'h3': tf.Variable(tf.truncated_normal([112*92*36/4/4, n_hidden_1],stddev=0.01)),
+    'out': tf.Variable(tf.truncated_normal([n_hidden_1, n_classes],stddev=0.01))
 }
 biases = {
     'b1': tf.Variable(tf.random_normal([n_hidden_1])),
@@ -165,8 +179,8 @@ pred = multilayer_perceptron(x_image, weights,biases)
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 #cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=pred)
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-#optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+#optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
@@ -199,18 +213,22 @@ with tf.Session() as sess:
         avg_cost = 0.
         total_batch = int(trainX.shape[0]/batch_size)
 
+        _, train_loss = sess.run([optimizer, cost], feed_dict={
+            x:trainX, y:trainY})
+        
+        
         # Loop over all batches
-        for i in range(total_batch):
+        #for i in range(total_batch):
             #batch_x, batch_y = tf.train.batch([images, labels], batch_size=batch_size, capacity=300, enqueue_many=True)
             #print("--in ",i,"-th batch")
-            training_idx = np.random.randint(trainX.shape[0],size=batch_size)
-            batch_x = trainX[training_idx]
-            batch_y = trainY[training_idx]
+            #training_idx = np.random.randint(trainX.shape[0],size=batch_size)
+            #batch_x = trainX[training_idx]
+            #batch_y = trainY[training_idx]
 
             #print(training_idx.shape,batch_x.shape, batch_y.shape)
             # Run optimization op (backprop) and cost op (to get loss value)
-            _, c = sess.run([optimizer, cost], feed_dict={x: batch_x,
-                                                         y: batch_y})
+            #_, c = sess.run([optimizer, cost], feed_dict={x: batch_x,
+              #                                           y: batch_y})
             # Compute average loss
             #avg_cost += c / total_batch
         # Display logs per epoch step
@@ -228,6 +246,10 @@ with tf.Session() as sess:
         # Save model weights to disk
         save_path = saver.save(sess, save_path)
         print("Model saved in file: %s" % save_path)
+
+
+
+    
 
     print("First Optimization Finished!")
     print("Final accuracies:", accuracies)
