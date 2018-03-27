@@ -13,12 +13,12 @@ import tensorflow as tf
 #batch_size = 30
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 15 
-num_of_samples = 1
+epoch_num = 40 
+num_of_samples = 10
 
 # Network Parameters
-n_hidden_1 = 100 # 1st layer number of features
-n_input = 112*92 # MNIST data input (img shape: 28*28)
+n_hidden_1 = 200 # 1st layer number of features
+n_input = 28*23 # MNIST data input (img shape: 28*28)
 n_classes = 20 # MNIST total classes (0-9 digits)
 
 # tf Graph input
@@ -177,12 +177,12 @@ with tf.Session() as sess:
             for i in range(0,n_input):
                 for j in range(0,n_hidden_1):
                     tmp = saveh1[i][j] 
-                    tmp = check_distribution(tmp, 5., -5.,  distribution, distribution_max, distribution_min, distribution_stage)
+                    tmp = check_distribution(tmp, 5.1, -5.1,  distribution, distribution_max, distribution_min, distribution_stage)
                     newh1[i][j] = tmp
             for i in range(0,n_hidden_1):
                 for j in range(0,n_classes):
                     tmp = saveout[i][j] 
-                    tmp = check_distribution(tmp, 5., -5.,  distribution, distribution_max, distribution_min, distribution_stage)
+                    tmp = check_distribution(tmp, 5.1, -5.1,  distribution, distribution_max, distribution_min, distribution_stage)
                     newout[i][j] = tmp
             #print("after-----",newout)
             weights['h1'].assign(newh1).eval()

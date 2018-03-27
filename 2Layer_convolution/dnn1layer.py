@@ -9,15 +9,15 @@ import numpy as np
 import tensorflow as tf
 
 # Parameters
-learning_rate = 0.01 
-batch_size = 100
+learning_rate = 0.1 
+batch_size = 30
 model_path = "./nn/NN"
 file_ending = ".ckpt"
-epoch_num = 15 
+epoch_num = 100 
 
 # Network Parameters
-n_hidden_1 = 100 # 1st layer number of features
-n_input = 10304#112*92 # MNIST data input (img shape: 28*28)
+n_hidden_1 = 200 # 1st layer number of features
+n_input = 28*23 #112*92 # MNIST data input (img shape: 28*28)
 n_classes = 20 # MNIST total classes (0-9 digits)
 
 # tf Graph input
@@ -130,8 +130,8 @@ pred = multilayer_perceptron(x, weights,biases)
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 #cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=pred)
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-#optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+#optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
