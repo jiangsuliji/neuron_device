@@ -1,8 +1,12 @@
 # neuron_device
-just working on some small experiment
 
-now updated to MNIST UCI dataset with gaussian distribution
+working design for three applications
+UCI small digit: reUCI, UCIv2
+MNIST: MNISTv2, reMNIST
+ORL face dataset: 2Layer_convolution--preORL_scale, dnn1layer, rednn1layer
+
+device variation statistics: distribution.txt
+
 next: 
-1. complete UCI data set
-2. train a fully custimized network 
+wait for updated distribution or add more interesting benchmarks
 
