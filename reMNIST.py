@@ -14,7 +14,7 @@ batch_size = 100
 display_step = 1
 model_path = "./MNIST/nn/NN"
 file_ending = ".ckpt"
-epoch_num = 50 
+epoch_num = 40 
 
 # Network Parameters
 n_hidden_1 = 300 # 1st layer number of features
@@ -28,7 +28,7 @@ n_classes = 10 # MNIST total classes (0-9 digits)
 # Gaussian distribution
 mu = 0 # Mean 
 sigma = 0.0 # Standard deviation
-num_of_samples = 10
+num_of_samples = 1
 gaussian_matrix = {
         'h1': np.random.normal(mu,sigma,epoch_num*n_input*n_hidden_1).\
                 reshape(epoch_num,n_input,n_hidden_1),
@@ -89,7 +89,7 @@ y = tf.placeholder("float", [None, n_classes])
 def multilayer_perceptron(x, weights):
     # Hidden layer with RELU activation
     layer_1 = tf.matmul(x, weights['h1'])
-    layer_1 = tf.nn.relu(layer_1)
+    #layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
     out_layer = tf.matmul(layer_1, weights['out'])
     return out_layer
@@ -172,13 +172,13 @@ with tf.Session() as sess:
             for i in range(0,n_input):
                 for j in range(0,n_hidden_1):
                     tmp = saveh1[i][j] 
-                    tmp = check_distribution(tmp, 4.8, -4.8,  distribution, distribution_max, distribution_min, distribution_stage)
+                    tmp = check_distribution(tmp, 4.7, -4.7,  distribution, distribution_max, distribution_min, distribution_stage)
                     newh1[i][j] = tmp
             #print("after-----",newh1)
             for i in range(0,n_hidden_1):
                 for j in range(0,n_classes):
                     tmp = saveout[i][j] 
-                    tmp = check_distribution(tmp, 4.8, -4.8,  distribution, distribution_max, distribution_min, distribution_stage)
+                    tmp = check_distribution(tmp, 4.7, -4.7,  distribution, distribution_max, distribution_min, distribution_stage)
                     newout[i][j] = tmp
             weights['h1'].assign(newh1).eval()
             weights['out'].assign(newout).eval()

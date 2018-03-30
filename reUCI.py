@@ -22,7 +22,7 @@ epoch_num = 40
 num_of_samples = 10
 
 # Network Parameters
-n_hidden_1 = 36 # 1st layer number of features
+n_hidden_1 = 50 # 1st layer number of features
 n_input = 64 # MNIST data input (img shape: 28*28)
 n_classes = 10 # MNIST total classes (0-9 digits)
 

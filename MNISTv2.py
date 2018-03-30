@@ -22,7 +22,7 @@ learning_rate = 0.1
 batch_size = 100
 model_path = "./MNIST/nn/NN"
 file_ending = ".ckpt"
-epoch_num = 50 
+epoch_num = 40 
 clip_var = 2.0
 
 # Network Parameters
@@ -61,7 +61,7 @@ y = tf.placeholder("float", [None, n_classes])
 def multilayer_perceptron(x, weights, biases):
     # Hidden layer with RELU activation
     layer_1 = tf.matmul(x, clip_grad(weights['h1'], clip_var))
-    layer_1 = tf.nn.relu(layer_1)
+    #layer_1 = tf.nn.relu(layer_1)
     # Output layer with linear activation
     out_layer = tf.matmul(layer_1, clip_grad(weights['out'], clip_var))
 
